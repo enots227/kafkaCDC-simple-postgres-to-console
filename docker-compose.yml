@@ -1,0 +1,77 @@
+version: "3.7"
+
+services:
+  postgres:
+    image: postgres:10
+    container_name: postgres
+    ports:
+      - "5000:5432"
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
+      POSTGRES_USER: db_user
+      POSTGRES_PASSWORD: db_password
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+
+  zookeeper:
+    build:
+      context: ./zookeeper
+    container_name: zookeeper
+    expose:
+      - 2181
+      - 2888
+      - 3888
+
+  broker1:
+    build:
+      context: ./kafka
+    container_name: broker1
+    expose:
+      - 9092
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://broker1:9092"
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+
+  broker2:
+    build:
+      context: ./kafka
+    container_name: broker2
+    expose:
+      - 9092
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 2
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://broker2:9092"
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      
+  source_connector:
+    build:
+      context: ./connector
+    entrypoint:  /source-start.sh
+    container_name: source_connector
+    depends_on: 
+      - broker1
+      - broker2
+    ports:
+      - 8083:8083
+
+  sink_connector:
+    build:
+      context: ./connector
+    entrypoint:  /sink-start.sh
+    container_name: sink_connector
+    depends_on:
+      - source_connector
+    ports:
+      - 8084:8083
+    environment:
+      KAFKA_CONNECT: source_connector:8083
+      KAFKA_BROKERS: broker1:9092
+
+networks:
+  default:
+    name: kafkaCDC
