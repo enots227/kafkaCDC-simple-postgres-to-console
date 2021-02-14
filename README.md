@@ -9,6 +9,7 @@ In these instructions, you will notice I am very redundant (just like your produ
 - Manual creation of ZooKeeper, Kafka, Kafka Connectors, and Confluent Community Platform to get an understanding of all the components involved.
 - Grasp a basic level understanding of the configuration options.
 - A source connector pulling data from Postgres.
+- A console sink connector displaying the Kafka data. 
 
 #
 ## Software Required
