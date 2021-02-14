@@ -5,6 +5,11 @@ In these instructions, you will notice I am very redundant (just like your produ
 
 <span style="color:grey;font-size:6px;">I know my jokes are not that funny, but they make me laugh at myself. It makes me have fun writing this too... I am not a writer at heart... so why I am I doing this... idk.</span>
 
+## Expected Result
+- Manual creation of ZooKeeper, Kafka, Kafka Connectors, and Confluent Community Platform to get an understanding of all the components involved.
+- Grasp a basic level understanding of the configuration options.
+- A source connector pulling data from Postgres.
+
 #
 ## Software Required
 - Docker - https://www.docker.com/products/docker-desktop
@@ -189,6 +194,9 @@ Notable fields:
 At this point I have given all the information for setting up the Docker images and property fields. So I will go over how it starts up.
 
 1. Start Postgres
+    - Create the Postgres accounts table under the db_user database with two columns, id as an integer and name as a varchar(max).
+    - Insert some data within the table.
+    - See generate_data.psql
 1. Start ZooKeeper
 1. Start Broker 1 and Broker 2 (Kafka instances)
     - The following are set through the `kafka/kafka-start.sh` script modifying the `%KAFKA_INSTALL%/config/server.properties` file in their respective VMs.
@@ -206,6 +214,15 @@ At this point I have given all the information for setting up the Docker images 
 1. Start Sink Connector
     - As previously stated this start script for the sink connector sends a POST request to the Kafka cluster to register the postgres topic.
     - It then proceeds to start the console consumer through `%KAFKA_INSTALL%/bin/kafka-console-consumer.sh --bootstrap-server broker1:9092 --topic jdbc_source_pg_increment.accounts --consumer.config /connectors/console-consumer.properties --from-beginning`
+
+#
+## Test
+- See the logs from the sink connector image. I use VS Code, so I just right clicked the image and clicked show logs.
+- Verify that the previously inserted data shows up in the Kafka topic.
+- Insert a new record into Postgres.
+- See the new record show up in the sink connector console logs.
+
+> Notice that if you try to update or delete a record that the console does not register these changes. This is because of two things. (1) Firstly, we are using the incremental mode so data will merely be appended. (2) Secondly, Kafka is an event database so deletes will probably show up as seperate records if it was set to a different mode. (I haven't tried that yet myself, so would not know for certain).
 
 #
 ## Problems Encountered :(
